@@ -6,5 +6,5 @@ Slack bot with JavaScrip quizzes
 2. Game sends questions each 30s - 1minute
 3. User can answer with `/ans [answer]` to the question and receives 100 points if correct
 4. Game ends when
-   a. no one answers OR
-   b. limit of 10-20 questions?
+   1. no one answers OR
+   2. limit of 10-20 questions?
