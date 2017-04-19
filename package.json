@@ -1,0 +1,31 @@
+{
+  "name": "jssy",
+  "version": "1.0.0",
+  "description": "JavaScript quiz bot",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florinpop17/jssy.git"
+  },
+  "keywords": [
+    "javascript",
+    "slack",
+    "quiz",
+    "bot"
+  ],
+  "author": "Florin Pop",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/florinpop17/jssy/issues"
+  },
+  "homepage": "https://github.com/florinpop17/jssy#readme"
+}
