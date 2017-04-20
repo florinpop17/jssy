@@ -91,6 +91,8 @@ app.post('/start', function (req, res) {
             "time": new Date()
         }
     ];
+
+    // Creating the properties of the object
     var creator = {
         name: req.body.user_id,
         slackid: req.body.user_name
@@ -106,15 +108,6 @@ app.post('/start', function (req, res) {
         res.send('Game create:\n'+String(game));
     });
 });
-// for seeing the
-// var GameSchema = new mongoose.Schema({
-//     questions: [],
-//     time: {type: Date, default: new Date()},
-//     creator: {name: String, slackid: String},
-//     teamid: String,
-//     channelid: String,
-//     qnumber: Number
-// });
 
 app.post('/ans', function (req, res) {
     var text = req.body.text;
