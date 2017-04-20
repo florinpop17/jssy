@@ -67,13 +67,6 @@ function getArrayOfRandomNumbers(max, len = 10){
     }
 }
 
-console.log(getArrayOfRandomNumbers(10, 10));
-console.log(getArrayOfRandomNumbers(100, 10));
-console.log(getArrayOfRandomNumbers(100, 10));
-console.log(getArrayOfRandomNumbers(5, 10));
-console.log(getArrayOfRandomNumbers(9, 10));
-
-
 function getRandomQuestionId() {
     return Math.floor(Math.random() * questions.length);
 }
