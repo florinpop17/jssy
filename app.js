@@ -135,25 +135,32 @@ app.post('/start', function (req, res) {
 });
 
 app.post('/ans', function (req, res) {
-    var text = req.body.text;
     console.log(req.body);
-
-    console.log('Current game is: ', currentGame);
-    console.log('The user entered: ',text,' and the correct answer was: ',currentGame.answer);
-    if(text === currentGame.answer){
-        score += 100;
-        currentGame = questions[getRandomQuestionId()];
-        res.send('Congratulations! Your answer was correct!\n\n'+'The next question: '+currentGame.question);
-    } else {
-        currentGame = questions[getRandomQuestionId()];
-        res.send('Wrong answer!\n\n'+'The next question: '+currentGame.question);
-    }
+    var teamid = req.body.team_id;
+    var channelid = req.body.channel_id;
+    var text = req.body.text;
+    Game.find({teamid: teamid, channelid: channelid}, function(err, game){
+        if(game.length > 0){
+            console.log(game);
+            var random = getArrayOfRandomNumbers(3)
+            res.send(random);
+        } else {
+            res.send("A game hasn't started for this channel");
+        }
+    });
+    
 });
 
 app.post('/stop', function (req, res) {
-    console.log(req.body);
-    res.send('Game ended. You got '+score+' score.');
-    score = 0;
+     Game.find({teamid: req.body.team_id, channelid: req.body.channel_id}, function(err, game){
+        if(game.length > 0){
+            Game.findByIdAndRemove(game[0]._id, function(err){
+                res.send("Game deleted");
+            });
+        } else {
+            res.send("A game hasn't started for this channel");
+        }
+    });
 });
 
 //SLACK AUTHENTICATION ROUTE THIS WILL BE USED FOR DISTRIBUTION AND FOR GETTING THE TOKEN.
