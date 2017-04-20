@@ -17,8 +17,7 @@ console.log(process.env.JSSYDATABASEURL);
 var URL = process.env.JSSYDATABASEURL || "mongodb://localhost/JSSY";
 mongoose.connect(URL);
 mongoose.Promise = global.Promise;
-var score = 0;
-var currentGame = {};
+
 var questions = [
     {
         'question':'If a = 30 and b = 50, what is the value of a + b = ?',
@@ -41,15 +40,11 @@ var questions = [
         "time": new Date()
     }
 ]
-// questions.forEach(function(question){
-//     Question.create(question, function(error, question){
-//         console.log(question);
-//     });
-// })
-
-function getRandomQuestionId() {
-    return Math.floor(Math.random() * questions.length);
-}
+questions.forEach(function(question){
+    Question.create(question, function(error, question){
+        console.log(question);
+    });
+})
 
 // body parser middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -59,19 +54,15 @@ app.get("/", function(req , res){
     res.send("something");
 });
 
-app.post("/populate", function(req, res){
-    console.log(req.body);
-    res.send("okay got it");
-});
-
 app.post('/start', function (req, res) {
     console.log(req.body);
-
-    currentGame = questions[getRandomQuestionId()];
-    console.log('Current game is: ', currentGame);
-
-    res.send('Starting the game... \n\n'+'Question: '+currentGame.question);
+    var info = {};
+    res.send("working");
 });
+
+function gerRandomQuestions(number){
+
+}
 
 app.post('/ans', function (req, res) {
     var text = req.body.text;
