@@ -47,7 +47,7 @@ var questions = [
 // })
 
 
-function getArrayOfRandomNumbers(max, len = 10){
+function getArrayOfRandomNumbers(max, len = 3){
     var result = [];
     if(max < len){
         for(var i=1; i<=max; i++){
