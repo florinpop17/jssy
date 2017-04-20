@@ -40,29 +40,91 @@ var questions = [
         "time": new Date()
     }
 ]
-questions.forEach(function(question){
-    Question.create(question, function(error, question){
-        console.log(question);
-    });
-})
+// questions.forEach(function(question){
+//     Question.create(question, function(error, question){
+//         console.log(question);
+//     });
+// })
+
+
+function getArrayOfRandomNumbers(max, len = 10){
+    var result = [];
+    if(max < len){
+        for(var i=1; i<=max; i++){
+            result.push(i);
+        }
+
+        return result;
+    } else {
+        while(result.length < len){
+            var newValue = Math.floor(Math.random() * max) + 1;
+            if(result.indexOf(newValue) === -1){
+                result.push(newValue);
+            }
+        }
+        return result.sort(function(a,b){return a-b});
+    }
+}
 
 // body parser middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get("/", function(req , res){
-    res.send("something");
+    res.send("You are on the home page.");
 });
 
 app.post('/start', function (req, res) {
     console.log(req.body);
-    var info = {};
-    res.send("working");
+    // Currenty we only have these 4 questions
+    // But we'll implement a getRandomQuestions function which will get a number of random questions out of the database
+    var questions = [
+        {
+            'question':'If a = 30 and b = 50, what is the value of a + b = ?',
+            'answer': '80',
+            "time": new Date()
+        },
+        {
+            'question':'What is the output of the following code: typeof true ?',
+            'answer': 'boolean',
+            "time": new Date()
+        },
+        {
+            'question':'a = Math.pow(2,10). What is the value of a?',
+            'answer': '1024',
+            "time": new Date()
+        },
+        {
+            'question':'a = true, b = false. What is the value of !b && a?',
+            'answer': 'true',
+            "time": new Date()
+        }
+    ];
+
+    // Creating the properties of the object
+    var creator = {
+        slackid: req.body.user_id,
+        name: req.body.user_name
+    }
+    var teamid = req.body.team_id;
+    var channelid = req.body.channel_id;
+    var qnumber = questions.length;
+
+    var newgame = {questions, creator, teamid, channelid, qnumber};
+    Game.find({teamid: teamid, channelid: channelid}, function(err, game){
+        console.log("this is the game" + game);
+        if(game.length === 0){
+            Game.create(newgame, function(error, game){
+                console.log(game);
+                res.send('Game create:\n'+String(game));
+            });
+        } else {
+            res.send("you already created a game");
+        }
+       
+    });
+    
 });
-
-function gerRandomQuestions(number){
-
-}
 
 app.post('/ans', function (req, res) {
     var text = req.body.text;
@@ -86,7 +148,7 @@ app.post('/stop', function (req, res) {
     score = 0;
 });
 
-//SLACK AUTHENTICATION ROUTE THIS WILL BE USED FOR DISTRIBUTION AND FOR GETTING THE TOKEN. 
+//SLACK AUTHENTICATION ROUTE THIS WILL BE USED FOR DISTRIBUTION AND FOR GETTING THE TOKEN.
 //THIS URL IS CONFIGURED UNDER THE REDIRECT URL OF THE SLACK APP SETTINGS "OAUTH AND PERMISSIONS"
 
 app.get("/slack/oauth", function(req, res){
