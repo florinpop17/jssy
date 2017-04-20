@@ -48,7 +48,7 @@ var questions = [
 // })
 
 
-function getArrayOfRandomNumbers(len, max){
+function getArrayOfRandomNumbers(max, len = 10){
     var result = [];
     while(result.length < len){
         var newValue = Math.floor(Math.random() * max) + 1;
@@ -56,7 +56,7 @@ function getArrayOfRandomNumbers(len, max){
             result.push(newValue);
         }
     }
-    return result;
+    return result.sort(function(a,b){return a-b});
 }
 
 function getRandomQuestionId() {
