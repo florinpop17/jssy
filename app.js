@@ -51,20 +51,17 @@ var questions = [
 function getArrayOfRandomNumbers(max, len = 10){
     var result = [];
     if(max < len){
-        for(var i=1; i<=max; i++){
-            result.push(i);
-        }
-
-        return result;
-    } else {
-        while(result.length < len){
-            var newValue = Math.floor(Math.random() * max) + 1;
-            if(result.indexOf(newValue) === -1){
-                result.push(newValue);
-            }
-        }
-        return result.sort(function(a,b){return a-b});
+        len = max;
     }
+
+    while(result.length < len){
+        var newValue = Math.floor(Math.random() * max) + 1;
+        if(result.indexOf(newValue) === -1){
+            result.push(newValue);
+        }
+    }
+
+    return result;
 }
 
 function getRandomQuestionId() {
