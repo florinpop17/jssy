@@ -47,6 +47,18 @@ var questions = [
 //     });
 // })
 
+
+function getArrayOfRandomNumbers(len, max){
+    var result = [];
+    while(result.length < len){
+        var newValue = Math.floor(Math.random() * max) + 1;
+        if(result.indexOf(newValue) === -1){
+            result.push(newValue);
+        }
+    }
+    return result;
+}
+
 function getRandomQuestionId() {
     return Math.floor(Math.random() * questions.length);
 }
