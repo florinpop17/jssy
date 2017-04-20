@@ -50,14 +50,29 @@ var questions = [
 
 function getArrayOfRandomNumbers(max, len = 10){
     var result = [];
-    while(result.length < len){
-        var newValue = Math.floor(Math.random() * max) + 1;
-        if(result.indexOf(newValue) === -1){
-            result.push(newValue);
+    if(max < len){
+        for(var i=1; i<=max; i++){
+            result.push(i);
         }
+
+        return result;
+    } else {
+        while(result.length < len){
+            var newValue = Math.floor(Math.random() * max) + 1;
+            if(result.indexOf(newValue) === -1){
+                result.push(newValue);
+            }
+        }
+        return result.sort(function(a,b){return a-b});
     }
-    return result.sort(function(a,b){return a-b});
 }
+
+console.log(getArrayOfRandomNumbers(10, 10));
+console.log(getArrayOfRandomNumbers(100, 10));
+console.log(getArrayOfRandomNumbers(100, 10));
+console.log(getArrayOfRandomNumbers(5, 10));
+console.log(getArrayOfRandomNumbers(9, 10));
+
 
 function getRandomQuestionId() {
     return Math.floor(Math.random() * questions.length);
