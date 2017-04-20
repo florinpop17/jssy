@@ -56,13 +56,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get("/", function(req , res){
-    res.send("something");
+    res.send("You are on the home page.");
 });
 
-app.post("/populate", function(req, res){
-    console.log(req.body);
-    res.send("okay got it");
-});
+
 
 app.post('/start', function (req, res) {
     console.log(req.body);
