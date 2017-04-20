@@ -75,7 +75,9 @@ app.get("/", function(req , res){
 });
 
 app.post('/start', function (req, res) {
-    console.log(req.body);
+    //console.log(req.body);
+
+
     // Currenty we only have these 4 questions
     // But we'll implement a getRandomQuestions function which will get a number of random questions out of the database
     var questions = [
@@ -101,7 +103,7 @@ app.post('/start', function (req, res) {
         }
     ];
 
-    // Creating the properties of the object
+    // Creating the properties of the new game
     var creator = {
         slackid: req.body.user_id,
         name: req.body.user_name
@@ -111,19 +113,25 @@ app.post('/start', function (req, res) {
     var qnumber = questions.length;
 
     var newgame = {questions, creator, teamid, channelid, qnumber};
-    Game.find({teamid: teamid, channelid: channelid}, function(err, game){
-        console.log("this is the game" + game);
-        if(game.length === 0){
+
+    // Variables for consol.log purposes in the server.
+    var teamdomain = req.body.team_domain;
+    var channelname = req.body.channel_name;
+
+    Game.find({teamid: teamid, channelid: channelid}, function(err, games){
+        //console.log("this is the game" + games);
+        if(games.length === 0){
             Game.create(newgame, function(error, game){
-                console.log(game);
-                res.send('Game create:\n'+String(game));
+                console.log(`Started game by ${creator.name} with id ${creator.slackid} in team ${teamdomain} and channel ${channelname} at ${new Date()}`);
+                res.send('Starting game...');
             });
         } else {
-            res.send("you already created a game");
+            console.log(`User ${creator.name} with id ${creator.slackid} in team ${teamdomain} and channel ${channelname} tried to start a game while another game was already running at ${new Date()}.`);
+            res.send("The game is already running!");
         }
-       
+
     });
-    
+
 });
 
 app.post('/ans', function (req, res) {
