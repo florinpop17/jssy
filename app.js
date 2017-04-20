@@ -94,8 +94,8 @@ app.post('/start', function (req, res) {
 
     // Creating the properties of the object
     var creator = {
-        name: req.body.user_id,
-        slackid: req.body.user_name
+        slackid: req.body.user_id,
+        name: req.body.user_name
     }
     var teamid = req.body.team_id;
     var channelid = req.body.channel_id;
