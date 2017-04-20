@@ -134,6 +134,17 @@ app.post('/start', function (req, res) {
 
 });
 
+app.post("/message", function(req, res){
+    Team.find({id: req.body.team_id}, function(err, team){
+        console.log(team);
+        
+         request.post('https://slack.com/api/chat.postMessage', {form: {token: team[0].token, channel: req.body.channel_id, text: req.body.text}}, function (error, response, body) {
+             
+         });
+         res.send("ok");
+    })
+});
+
 app.post('/ans', function (req, res) {
     console.log(req.body);
     var teamid = req.body.team_id;
@@ -142,8 +153,9 @@ app.post('/ans', function (req, res) {
     Game.find({teamid: teamid, channelid: channelid}, function(err, game){
         if(game.length > 0){
             console.log(game);
-            var random = getArrayOfRandomNumbers(3)
-            res.send(random);
+            if(game[0] === 0){
+
+            }
         } else {
             res.send("A game hasn't started for this channel");
         }

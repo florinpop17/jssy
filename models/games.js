@@ -6,7 +6,12 @@ var GameSchema = new mongoose.Schema({
     creator: {name: String, slackid: String},
     teamid: String,
     channelid: String,
-    qnumber: Number
+    qnumber: Number,
+    players: [
+        {
+            
+        }
+    ]
 });
 
 module.exports = mongoose.model("Game", GameSchema);
