@@ -199,8 +199,23 @@ app.get("/slack/oauth", function(req, res){
                             return res.send("<h1>Another person from the team already added the app.</h1>");
                         }
                         Team.create({name: teamname, id: teamid, token: token}, function(err, newteam){
-                            // console.log("this is a new team " + newteam);
-                            res.redirect("https://" + JSON.parse(body).team.domain + ".slack.com/");
+                            console.log("this is a new team " + newteam);
+                            var teamdomain = JSON.parse(body).team.domain;
+                            request.post('https://slack.com/api/channels.create', {form: {token: token, name: "Jssy-Game"}}, function (error, response, body) {
+                                console.log("This is the new Channel" + body);
+                                var channel = {};
+                                channel.name =  JSON.parse(body).channel.name;
+                                channel.id = JSON.parse(body).channel.id;
+                                var game = {}
+                                game.channelid = channel.id;
+                                game.teamid = teamid;
+                                game.time = new Date();
+                                game.token = token;
+                                game.currentQuestion = {};
+                                Game.create(game, function(err, game){
+                                    sendquestion(channel, token, res, game);
+                                });
+                            })
                         });
                     });
                 } else {
@@ -210,6 +225,50 @@ app.get("/slack/oauth", function(req, res){
         }
     });
 });
+
+function sendquestion(channel, token, res, game){
+     Question.find({}).exec()
+    .then(function(questions){
+        console.log(questions);
+        setInterval(function(){
+            var randquest = questions[Math.round(questions.length * Math.random())];
+            //we will send tha message afterwards I'll change it tomorrow;
+            request.post('https://slack.com/api/chat.postMessage', {form: {token: token, channel: channel.id, text: randquest.question}}, function (error, response, body) {
+                //before doing this we need to find the game and see if anyone has answered any questions. If they have then we show the people who have answered and their relative points.
+                Game.find({channelid: channel.id, teamid: game.teamid}).exec()
+                .then(function(game2){
+                    console.log(game2);
+                    if(game2.currentQuestion.peopleAnswered !== undefined){
+                        if(game2.currentQuestion.peopleAnswered.length > 0){
+                            
+                        } else {
+
+                        }
+                    }
+                })
+                Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: ransquest.answer}}, {new: true}).exec()
+                .then(function(updatedgame){
+                    console.log(updatedgame);
+                });
+            });
+        }, 60000);
+        res.redirect("https://" + teamdomain + ".slack.com/");
+    });
+}
+
+
+//route to remove the channel from slack and from the database
+app.post("/remove", function(req, res){
+    Game.find({channelid: req.body.channel_id, teamid: req.body.team_id}).exec()
+    .then(function(game){
+        console.log(game);
+        request.post('https://slack.com/api/channels.archive', {form: {token: game.token, channel: game.channelid}}, function (error, response, body) {
+            Game.findByIdAndRemove(game._id, function(){
+                res.send("Removed");
+            });
+        });
+    });
+})
 
 app.listen(port, function () {
     console.log('Listening on port ' + port);

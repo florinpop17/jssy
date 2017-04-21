@@ -1,17 +1,29 @@
 var mongoose = require("mongoose");
 
 var GameSchema = new mongoose.Schema({
-    questions: [],
     time: {type: Date, default: new Date()},
-    creator: {name: String, slackid: String},
     teamid: String,
     channelid: String,
-    qnumber: Number,
+    token: String,
     players: [
         {
-            
+            name: String,
+            id: String,
+            points: Number,
+            // pointsSplit: [{number: Number, time: Date}],
+            answers: Number
         }
-    ]
+    ],
+    currentQuestion: {
+        question: String,
+        answer: String,
+        peopleAnswered: [{
+            id: String,
+            Name: String,
+            points: String,
+            number: Number
+        }]
+    }
 });
 
 module.exports = mongoose.model("Game", GameSchema);
