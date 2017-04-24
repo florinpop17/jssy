@@ -244,7 +244,7 @@ function sendquestion(channel, token, res, game){
                             Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: ransquest.answer}}, {new: true}).exec()
                             .then(function(updatedgame){
                                 console.log(updatedgame);
-                                var message = ransquest.question;
+                                var message = randquest.question;
                                 sendmessage(channel, token, message);
                             });
                         }, 2000)
