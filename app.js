@@ -232,28 +232,40 @@ function sendquestion(channel, token, res, game){
         console.log(questions);
         setInterval(function(){
             var randquest = questions[Math.round(questions.length * Math.random())];
-            //we will send tha message afterwards I'll change it tomorrow;
-            request.post('https://slack.com/api/chat.postMessage', {form: {token: token, channel: channel.id, text: randquest.question}}, function (error, response, body) {
-                //before doing this we need to find the game and see if anyone has answered any questions. If they have then we show the people who have answered and their relative points.
-                Game.find({channelid: channel.id, teamid: game.teamid}).exec()
-                .then(function(game2){
-                    console.log(game2);
-                    if(game2.currentQuestion.peopleAnswered !== undefined){
-                        if(game2.currentQuestion.peopleAnswered.length > 0){
-                            
-                        } else {
-
-                        }
+            //before doing this we need to find the game and see if anyone has answered any questions. If they have then we show the people who have answered and their relative points.
+            Game.find({channelid: channel.id, teamid: game.teamid}).exec()
+            .then(function(game2){
+                console.log(game2);
+                if(game2.currentQuestion.peopleAnswered !== undefined){
+                    if(game2.currentQuestion.peopleAnswered.length > 0){
+                        var message = {text: "that many people answered" + peopleAnswered.length};
+                        sendmessage(channel, token, message);
+                        setTimeout(function(){
+                            Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: ransquest.answer}}, {new: true}).exec()
+                            .then(function(updatedgame){
+                                console.log(updatedgame);
+                                var message = ransquest.question;
+                                sendmessage(channel, token, message);
+                            });
+                        }, 2000)
+                    } else {
+                        res.json({text: "no one answered this question"});
                     }
-                })
-                Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: ransquest.answer}}, {new: true}).exec()
-                .then(function(updatedgame){
-                    console.log(updatedgame);
-                });
-            });
+                }
+            })
+            
         }, 60000);
         res.redirect("https://" + teamdomain + ".slack.com/");
     });
+}
+
+function updategame() {
+    
+}
+
+function sendmessage(channel, token, text) {
+    request.post('https://slack.com/api/chat.postMessage', {form: {token: token, channel: channel.id, text: randquest.question}}, function (error, response, body) {
+    })
 }
 
 
