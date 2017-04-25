@@ -19,9 +19,7 @@ var GameSchema = new mongoose.Schema({
         answer: String,
         peopleAnswered: [{
             id: String,
-            Name: String,
-            points: String,
-            number: Number
+            name: String
         }]
     }
 });

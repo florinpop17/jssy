@@ -11,6 +11,7 @@ var mongoose = require("mongoose");
 
 var app = express();
 var port = process.env.PORT || 3000;
+var async = require("async");
 
 //checks if the database url is right
 console.log(process.env.JSSYDATABASEURL);
@@ -135,13 +136,12 @@ app.post('/start', function (req, res) {
 });
 
 app.post("/message", function(req, res){
+    console.log(req.body);
     Team.find({id: req.body.team_id}, function(err, team){
-        console.log(team);
-        
-         request.post('https://slack.com/api/chat.postMessage', {form: {token: team[0].token, channel: req.body.channel_id, text: req.body.text}}, function (error, response, body) {
-             
-         });
-         res.send("ok");
+        Game.find({teamid: req.body.team_id, channelid: req.body.channel_id}, function(error, game){
+            sendquestion(team[0].token, game[0]);
+            res.send("started");
+        });
     })
 });
 
@@ -150,14 +150,58 @@ app.post('/ans', function (req, res) {
     var teamid = req.body.team_id;
     var channelid = req.body.channel_id;
     var text = req.body.text;
-    Game.find({teamid: teamid, channelid: channelid}, function(err, game){
+    //FIND THE GAME
+    // res.send("ok working");
+    Game.find({teamid: teamid, channelid: channelid}).exec()
+    .then(function(game){
         if(game.length > 0){
-            console.log(game);
-            if(game[0] === 0){
-
+            var answer = game[0].currentQuestion.answer;
+            console.log("answer " + answer + " text " + text);
+            //Check if user has already answered that question
+            var answered = game[0].currentQuestion.peopleAnswered;
+            var ids = answered.map(function(el){return el.id});
+            var index = ids.indexOf(req.body.user_id);
+            if(index !== -1){
+                res.send("You've already answered this question");
+            } else {
+                var players = game[0].players;
+                var plids = players.map(function(el){return el.id});
+                var plindex = plids.indexOf(req.body.user_id);
+                if(plindex === -1){
+                    var newplayer = {};
+                    newplayer.name = req.body.user_name;
+                    newplayer.id = req.body.user_id;
+                    if(answer === text){
+                        newplayer.points = 100;
+                        newplayer.answers = 1;
+                        res.send("Correct! Congratuations you just got 100 points :)");
+                        answered.push({id: req.body.user_id, name: req.body.user_name});
+                        players.push(newplayer);
+                    } else {
+                        newplayer.points = 0;
+                        newplayer.answers = 0;
+                        res.send("I'm sorry your answer was wrong");
+                        players.push(newplayer);
+                    }
+                    
+                } else {
+                    var player = players[plindex];
+                    if(answer === text){
+                        player.points += 100;
+                        player.answers ++;
+                        res.send("Correct! Congratuations you just got 100 points :)");
+                        answered.push({id: req.body.user_id, name: req.body.user_name});
+                    } else {
+                        res.send("I'm sorry your answer was wrong");
+                    }
+                    players[plindex] = player;
+                }
+                console.log("these are the answered now : " + answered);
+                Game.findByIdAndUpdate(game[0]._id, {players: players, "currentQuestion.peopleAnswered": answered}, {new: true}).exec()
+                .then(function(game){
+                    console.log("updated game here: " + game);
+                });
             }
-        } else {
-            res.send("A game hasn't started for this channel");
         }
     });
     
@@ -185,36 +229,39 @@ app.get("/slack/oauth", function(req, res){
         code: req.query.code
     }};
     // console.log(data);
+    //using the data from above we're autheticating
     request.post('https://slack.com/api/oauth.access', data, function (error, response, body) {
         if (!error && response.statusCode == 200) {
             var token = JSON.parse(body).access_token;
             console.log(JSON.parse(body));
+            //getting the info about the team that the user chose to authenticate
             request.post('https://slack.com/api/team.info', {form: {token: token}}, function (error, response, body) {
                 if (!error && response.statusCode == 200) {
                     console.log(JSON.parse(body));
                     var teamid = JSON.parse(body).team.id;
                     var teamname = JSON.parse(body).team.name;
+                    //finding the team to make sure that it isn't already there
                     Team.find({name: teamname, id: teamid}, function(err, foundteam){
                         if(foundteam.length > 0 && foundteam){
                             return res.send("<h1>Another person from the team already added the app.</h1>");
                         }
+                        //if it isn't we create it in our database to save the token
                         Team.create({name: teamname, id: teamid, token: token}, function(err, newteam){
                             console.log("this is a new team " + newteam);
                             var teamdomain = JSON.parse(body).team.domain;
-                            request.post('https://slack.com/api/channels.create', {form: {token: token, name: "Jssy-Game"}}, function (error, response, body) {
-                                console.log("This is the new Channel" + body);
-                                var channel = {};
-                                channel.name =  JSON.parse(body).channel.name;
-                                channel.id = JSON.parse(body).channel.id;
+                            //we're creating the channel within this team
+                            request.post('https://slack.com/api/channels.create', {form: {token: token, name: "JssyGame11"}}, function (error, response, body) {
+                                console.log("This is the new Channel" + JSON.parse(body));
                                 var game = {}
-                                game.channelid = channel.id;
+                                game.channelid = JSON.parse(body).channel.id;
                                 game.teamid = teamid;
                                 game.time = new Date();
                                 game.token = token;
                                 game.currentQuestion = {};
                                 Game.create(game, function(err, game){
-                                    sendquestion(channel, token, res, game);
+                                    sendquestion(token, game);
                                 });
+                                res.redirect("https://" + teamdomain + ".slack.com/");
                             })
                         });
                     });
@@ -226,48 +273,51 @@ app.get("/slack/oauth", function(req, res){
     });
 });
 
-function sendquestion(channel, token, res, game){
-     Question.find({}).exec()
-    .then(function(questions){
-        console.log(questions);
-        setInterval(function(){
-            var randquest = questions[Math.round(questions.length * Math.random())];
-            //before doing this we need to find the game and see if anyone has answered any questions. If they have then we show the people who have answered and their relative points.
-            Game.find({channelid: channel.id, teamid: game.teamid}).exec()
+function sendquestion(token, game){
+    setInterval(function(){
+        Question.find({}).exec()
+        .then(function(questions){
+            // console.log(questions);
+            var randquest = questions[Math.floor(questions.length * Math.random())];
+            console.log("this is the passed game" + game);
+            console.log("and this is the randquestion" + randquest);
+            Game.find({channelid: game.channelid, teamid: game.teamid}).exec()
             .then(function(game2){
-                console.log(game2);
-                if(game2.currentQuestion.peopleAnswered !== undefined){
-                    if(game2.currentQuestion.peopleAnswered.length > 0){
-                        var message = {text: "that many people answered" + peopleAnswered.length};
-                        sendmessage(channel, token, message);
-                        setTimeout(function(){
-                            Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: ransquest.answer}}, {new: true}).exec()
-                            .then(function(updatedgame){
-                                console.log(updatedgame);
-                                var message = randquest.question;
-                                sendmessage(channel, token, message);
-                            });
-                        }, 2000)
+                // console.log(game2[0]);
+                if(game2[0].currentQuestion.peopleAnswered !== undefined){
+                    if(game2[0].currentQuestion.peopleAnswered.length > 0){
+                        var answered = game2[0].currentQuestion.peopleAnswered;
+                        var names = answered.map(function(el){return el.name});
+                        // var ids = answered.map(function (el){return el.id});
+                        var message = "people who answered :" + names;
+                        console.log("I'm in the field of shadows now !!!!!!!!!!!!!!!!!!!!!!!!!" + message);
+                        sendmessage(game.channelid, token, message);
                     } else {
-                        res.json({text: "no one answered this question"});
+                        var message = "no one answered correctly the previous question";
+                        sendmessage(game.channelid, token, message);
                     }
+                    Game.findByIdAndUpdate(game._id, {currentQuestion: {question: randquest.question, answer: randquest.answer, peopleAnswered: []}}, {new: true}).exec()
+                    .then(function(updatedgame){
+                        console.log("updated game" + updatedgame);
+                        var message = randquest.question;
+                        sendmessage(game.channelid, token, message);
+                    }).catch(function(err){
+                        throw err;
+                    });
                 }
-            })
-            
-        }, 60000);
-        res.redirect("https://" + teamdomain + ".slack.com/");
+            }).catch(function(err){
+                throw err;
+            });
+        }).catch(function(err){
+            throw err;
+        })
+    }, 60000);
+};
+
+function sendmessage(channelid, token, text) {
+    request.post('https://slack.com/api/chat.postMessage', {form: {token: token, channel: channelid, text: text}}, function (error, response, body) {
     });
 }
-
-function updategame() {
-    
-}
-
-function sendmessage(channel, token, text) {
-    request.post('https://slack.com/api/chat.postMessage', {form: {token: token, channel: channel.id, text: randquest.question}}, function (error, response, body) {
-    })
-}
-
 
 //route to remove the channel from slack and from the database
 app.post("/remove", function(req, res){
@@ -279,8 +329,8 @@ app.post("/remove", function(req, res){
                 res.send("Removed");
             });
         });
-    });
-})
+    })
+});
 
 app.listen(port, function () {
     console.log('Listening on port ' + port);
